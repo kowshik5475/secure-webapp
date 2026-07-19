@@ -42,7 +42,7 @@
             placeholder="Create a strong password"
             class="form-control"
           >
-          <button type="button" class="show-pw-btn" onclick="togglePassword('password', this)">Show</button>
+          <button type="button" class="show-pw-btn" data-target="password">Show</button>
         </div>
         <div class="pw-strength" id="pw-strength"></div>
       </div>
@@ -60,7 +60,7 @@
             placeholder="Repeat password"
             class="form-control"
           >
-          <button type="button" class="show-pw-btn" onclick="togglePassword('confirm_password', this)">Show</button>
+          <button type="button" class="show-pw-btn" data-target="confirm_password">Show</button>
         </div>
       </div>
 
@@ -82,32 +82,4 @@
     </div>
   </div>
 </div>
-
-<script>
-function togglePassword(id, btn) {
-  const input = document.getElementById(id);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = 'Hide';
-  } else {
-    input.type = 'password';
-    btn.textContent = 'Show';
-  }
-}
-
-// Client-side password strength indicator (UX only — NOT a security control)
-document.getElementById('password').addEventListener('input', function() {
-  const val = this.value;
-  const el = document.getElementById('pw-strength');
-  let strength = 0;
-  if (val.length >= 8) strength++;
-  if (/[A-Z]/.test(val)) strength++;
-  if (/\d/.test(val)) strength++;
-  if (/[!@#$%^&*(),.?":{}|<>_\-]/.test(val)) strength++;
-  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-  const classes = ['', 'pw-weak', 'pw-fair', 'pw-good', 'pw-strong'];
-  el.textContent = val.length > 0 ? labels[strength] : '';
-  el.className = 'pw-strength ' + (val.length > 0 ? classes[strength] : '');
-});
-</script>
 {% endblock %}

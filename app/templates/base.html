@@ -68,7 +68,7 @@
           -->
           <div class="flash flash-{{ category }}">
             <span>{{ message }}</span>
-            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+            <button class="flash-close" type="button" aria-label="Dismiss">×</button>
           </div>
         {% endfor %}
       </div>
@@ -95,5 +95,6 @@
 </footer>
 
 <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
 </body>
 </html>

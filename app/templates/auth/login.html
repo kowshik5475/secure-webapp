@@ -52,7 +52,7 @@
             placeholder="••••••••"
             class="form-control"
           >
-          <button type="button" class="show-pw-btn" onclick="togglePassword('password', this)">Show</button>
+          <button type="button" class="show-pw-btn" data-target="password">Show</button>
         </div>
       </div>
 
@@ -74,17 +74,4 @@
     </div>
   </div>
 </div>
-
-<script>
-function togglePassword(id, btn) {
-  const input = document.getElementById(id);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = 'Hide';
-  } else {
-    input.type = 'password';
-    btn.textContent = 'Show';
-  }
-}
-</script>
 {% endblock %}

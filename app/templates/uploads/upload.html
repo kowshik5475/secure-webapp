@@ -75,47 +75,4 @@
   </div>
 
 </div>
-
-<script>
-(function () {
-  'use strict';
-  var dropzone = document.getElementById('dropzone');
-  var input = document.getElementById('file-input');
-  var filenameLabel = document.getElementById('dropzone-filename');
-
-  function showFilename() {
-    if (input.files && input.files.length > 0) {
-      filenameLabel.textContent = input.files[0].name;
-      dropzone.classList.add('dropzone-has-file');
-    }
-  }
-
-  dropzone.addEventListener('click', function () { input.click(); });
-  input.addEventListener('change', showFilename);
-
-  ['dragenter', 'dragover'].forEach(function (evt) {
-    dropzone.addEventListener(evt, function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.add('dropzone-dragover');
-    });
-  });
-
-  ['dragleave', 'drop'].forEach(function (evt) {
-    dropzone.addEventListener(evt, function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.remove('dropzone-dragover');
-    });
-  });
-
-  dropzone.addEventListener('drop', function (e) {
-    var dt = e.dataTransfer;
-    if (dt && dt.files && dt.files.length > 0) {
-      input.files = dt.files;
-      showFilename();
-    }
-  });
-})();
-</script>
 {% endblock %}
