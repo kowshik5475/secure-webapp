@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Files{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Your Files</h1>
+    <p class="page-subtitle">PNG, JPEG, GIF, or PDF — max 5&nbsp;MB. Validated by content, not extension.</p>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+
+  <div class="info-card info-card-wide">
+    <h2>Upload a File</h2>
+
+    <!--
+      OWASP A04: multipart form for file upload. CSRF token included as a
+      hidden field — @csrf_protect on the POST route validates it against
+      the signed JWT claim before anything touches the filesystem.
+    -->
+    <form action="{{ url_for('uploads.upload_post') }}" method="POST"
+          enctype="multipart/form-data" id="upload-form">
+      <input type="hidden" name="_csrf_token" value="{{ current_user.csrf_token }}">
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" name="file" id="file-input" class="dropzone-input"
+               accept=".png,.jpg,.jpeg,.gif,.pdf">
+        <div class="dropzone-body">
+          <span class="dropzone-icon">📎</span>
+          <p class="dropzone-text">Drag a file here, or <span class="dropzone-browse">browse</span></p>
+          <p class="dropzone-filename" id="dropzone-filename"></p>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem;">
+        Upload File
+      </button>
+    </form>
+
+    <p class="empty-state" style="margin-top:0.75rem;">
+      Server-side checks: magic-byte content inspection, UUID-renamed storage,
+      and a save path outside the web root — the extension shown above is a
+      convenience filter only, not a security control.
+    </p>
+  </div>
+
+  <div class="info-card info-card-wide">
+    <h2>Uploaded Files</h2>
+    {% if files %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Original Name</th>
+            <th>Type</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+          <tr>
+            <!-- OWASP XSS: original_name is auto-escaped — not rendered as HTML -->
+            <td>{{ f.original_name }}</td>
+            <td><span class="tag tag-blue">{{ f.mime_type }}</span></td>
+            <td>{{ (f.size_bytes / 1024) | round(1) }} KB</td>
+            <td>{{ f.uploaded_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No files uploaded yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var dropzone = document.getElementById('dropzone');
+  var input = document.getElementById('file-input');
+  var filenameLabel = document.getElementById('dropzone-filename');
+
+  function showFilename() {
+    if (input.files && input.files.length > 0) {
+      filenameLabel.textContent = input.files[0].name;
+      dropzone.classList.add('dropzone-has-file');
+    }
+  }
+
+  dropzone.addEventListener('click', function () { input.click(); });
+  input.addEventListener('change', showFilename);
+
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dropzone-dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dropzone-dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', function (e) {
+    var dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length > 0) {
+      input.files = dt.files;
+      showFilename();
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">OWASP Top 10 Portfolio</div>
+    <h1 class="hero-title">Secure Web Application</h1>
+    <p class="hero-subtitle">
+      A production-grade security reference implementation demonstrating every
+      OWASP Top 10 mitigation in a real Flask application.
+    </p>
+    <div class="hero-actions">
+      {% if current_user %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+      {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">Sign In</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<section class="controls-grid">
+  <h2 class="section-title">Security Controls Implemented</h2>
+  <div class="grid">
+
+    <div class="control-card">
+      <div class="control-icon">🔑</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A02</span>
+        <h3>bcrypt Password Hashing</h3>
+      </div>
+      <p>Passwords are hashed with bcrypt (work factor 12) before storage. Plaintext passwords never touch the database. bcrypt is adaptive — work factor can be increased as hardware improves.</p>
+      <code class="code-snippet">bcrypt.hashpw(pw, bcrypt.gensalt(rounds=12))</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">🍪</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A05</span>
+        <h3>JWT in httpOnly Cookie</h3>
+      </div>
+      <p>Session tokens are stored in httpOnly, Secure, SameSite=Strict cookies — not localStorage. JavaScript cannot read the token, eliminating XSS-based session theft.</p>
+      <code class="code-snippet">httponly=True, samesite="Strict"</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">✅</div>
+      <div class="control-meta">
+        <span class="owasp-tag">CSRF</span>
+        <h3>Synchronizer Token Pattern</h3>
+      </div>
+      <p>Every state-changing form embeds a CSRF token from the signed JWT. The server validates it on every POST/PUT/DELETE. SameSite=Strict adds a second defence layer.</p>
+      <code class="code-snippet">&lt;input type="hidden" name="_csrf_token" value="..."&gt;</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">👤</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A01</span>
+        <h3>Role-Based Access Control</h3>
+      </div>
+      <p>Admin vs. User roles are enforced server-side on every protected route via decorators. Client-side role checks are UX only. Role changes are logged to the audit trail.</p>
+      <code class="code-snippet">@admin_required — server-side only</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">🛡</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A03</span>
+        <h3>Parameterized SQL</h3>
+      </div>
+      <p>Every database query uses ? placeholders — no string concatenation. SQLite's parameterized API treats values as data, never as executable SQL. SQL injection is structurally impossible.</p>
+      <code class="code-snippet">conn.execute("SELECT * FROM users WHERE email = ?", (email,))</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">🖥</div>
+      <div class="control-meta">
+        <span class="owasp-tag">XSS</span>
+        <h3>Output Encoding</h3>
+      </div>
+      <p>Jinja2 auto-escaping is enabled for all .html templates. Every {{ variable }} is HTML-escaped before output. The <code>| safe</code> filter is never used on user-controlled data.</p>
+      <code class="code-snippet">{{ user_input }} → auto-escaped</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">📎</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A04</span>
+        <h3>File Upload Validation</h3>
+      </div>
+      <p>File type is validated by magic bytes (not extension). Files are stored outside the web root with randomised UUID names. Path traversal and extension spoofing are both mitigated.</p>
+      <code class="code-snippet">filetype.guess(bytes) → checks magic bytes</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">⏱</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A07</span>
+        <h3>Rate Limiting + Lockout</h3>
+      </div>
+      <p>Login is rate-limited to 10 requests/minute via Flask-Limiter. After 5 consecutive failures, the account is locked for 15 minutes. Thwarts brute-force and credential-stuffing attacks.</p>
+      <code class="code-snippet">@limiter.limit("10 per minute")</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">📋</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A09</span>
+        <h3>Audit Logging</h3>
+      </div>
+      <p>Every security event (login, failure, lockout, role change, file upload, admin action) is written to the audit_log table with timestamp, actor, target, IP, and details.</p>
+      <code class="code-snippet">write_audit_log(event_type, user_id, ip, ...)</code>
+    </div>
+
+    <div class="control-card">
+      <div class="control-icon">🛡️</div>
+      <div class="control-meta">
+        <span class="owasp-tag">A05</span>
+        <h3>Secure HTTP Headers</h3>
+      </div>
+      <p>Every response carries CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, and HSTS headers. Applied globally via Flask after_request().</p>
+      <code class="code-snippet">Content-Security-Policy: default-src 'self'</code>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

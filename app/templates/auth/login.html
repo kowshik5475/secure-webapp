@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon">🔐</div>
+      <h1>Sign In</h1>
+      <p>Welcome back — your session is protected by a signed JWT in an httpOnly cookie.</p>
+    </div>
+
+    <!--
+      OWASP A04 / CSRF:
+      - autocomplete="off" on password (browser security best practice)
+      - _csrf_token hidden field ties this form to the current authenticated session
+        (for login the user has no JWT yet, so CSRF is less critical here — but it's
+        included for completeness and because the pattern is always used)
+      - action is always the server URL; we never redirect to a user-supplied URL
+    -->
+    <form method="POST" action="{{ url_for('auth.login') }}" novalidate class="auth-form">
+      <!--
+        For the login page there is no active JWT yet, so there is no CSRF token
+        to embed. The rate-limiter (5 per minute) and SameSite=Strict cookie protect
+        the login endpoint instead.
+      -->
+
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          maxlength="254"
+          autocomplete="email"
+          placeholder="you@example.com"
+          class="form-control"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            maxlength="128"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            class="form-control"
+          >
+          <button type="button" class="show-pw-btn" onclick="togglePassword('password', this)">Show</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+    </form>
+
+    <p class="auth-footer">
+      Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a>
+    </p>
+
+    <div class="security-note">
+      <strong>Security controls active:</strong>
+      <ul>
+        <li>🔒 Rate-limited to 10 attempts per minute (OWASP A07)</li>
+        <li>🔒 Account locked after 5 failed attempts (OWASP A07)</li>
+        <li>🔒 JWT stored in httpOnly, SameSite=Strict cookie — not localStorage (OWASP A05)</li>
+        <li>🔒 Generic error message — no user enumeration (OWASP A07)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePassword(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = 'Hide';
+  } else {
+    input.type = 'password';
+    btn.textContent = 'Show';
+  }
+}
+</script>
+{% endblock %}

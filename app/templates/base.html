@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--
+  OWASP A03 / XSS Prevention:
+  Jinja2 auto-escaping is enabled for .html templates by default.
+  All {{ variable }} expressions are HTML-escaped before output.
+  We NEVER use | safe on user-supplied data.
+
+  OWASP A05:
+  Security headers are applied server-side via after_request().
+  The meta CSP tag here is belt-and-suspenders for older proxies.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SecureApp{% endblock %} — OWASP Portfolio</title>
+
+  <!--
+    CSRF meta tag for AJAX requests.
+    JavaScript reads this to include X-CSRF-Token in fetch() calls.
+    The token value comes from the signed JWT — it cannot be forged.
+  -->
+  {% if current_user %}
+  <meta name="csrf-token" content="{{ current_user.csrf_token }}">
+  {% endif %}
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="{{ url_for('main.index') }}" class="nav-brand">
+      <span class="brand-icon">🔐</span> SecureApp
+    </a>
+    <div class="nav-links">
+      {% if current_user %}
+        <span class="nav-user">{{ current_user.email }}</span>
+        <span class="nav-badge badge-{{ current_user.role }}">{{ current_user.role }}</span>
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
+        <a href="{{ url_for('uploads.upload') }}" class="nav-link">Files</a>
+        {% if current_user.role == 'admin' %}
+          <a href="{{ url_for('admin.dashboard') }}" class="nav-link nav-admin">Admin</a>
+        {% endif %}
+        <!-- POST-only logout prevents CSRF-logout via GET request (img tag etc.) -->
+        <form action="{{ url_for('auth.logout') }}" method="POST" style="display:inline">
+          <input type="hidden" name="_csrf_token" value="{{ current_user.csrf_token }}">
+          <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <!--
+            OWASP XSS: message is auto-escaped by Jinja2.
+            Even if an attacker somehow got HTML into a flash message,
+            it renders as text, not markup.
+          -->
+          <div class="flash flash-{{ category }}">
+            <span>{{ message }}</span>
+            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p>OWASP Top 10 Security Portfolio — Built with Flask</p>
+    <p class="footer-controls">
+      <span title="A02: bcrypt">🔑 bcrypt</span>
+      <span title="A03: Parameterized SQL">🛡 Param SQL</span>
+      <span title="A05: httpOnly JWT cookie">🍪 httpOnly JWT</span>
+      <span title="CSRF: Synchronizer token">✅ CSRF Tokens</span>
+      <span title="A01: RBAC">👤 RBAC</span>
+      <span title="A04: File upload validation">📎 Upload Validation</span>
+      <span title="A07: Rate limiting">⏱ Rate Limiting</span>
+      <span title="A09: Audit logging">📋 Audit Log</span>
+    </p>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+</body>
+</html>

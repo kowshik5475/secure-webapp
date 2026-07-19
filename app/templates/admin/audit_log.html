@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Security Audit Log</h1>
+    <p class="page-subtitle">OWASP A09 — Last {{ logs | length }} events</p>
+  </div>
+</div>
+
+<div class="security-note" style="margin-bottom: 1.5rem;">
+  <strong>About this log:</strong> Every security-relevant event (logins, failures, lockouts,
+  role changes, file uploads, admin actions) is recorded with timestamp, actor, target, IP,
+  and a human-readable description. In production, these would stream to a SIEM (e.g. Splunk,
+  ELK, Datadog) for real-time alerting on anomalous patterns.
+</div>
+
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timestamp (UTC)</th>
+        <th>Event</th>
+        <th>User (affected)</th>
+        <th>Actor (performed by)</th>
+        <th>IP Address</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="mono">{{ log.id }}</td>
+        <td class="mono">{{ log.timestamp }}</td>
+        <td>
+          <span class="event-tag event-{{ log.event_type }}">{{ log.event_type }}</span>
+        </td>
+        <!-- All values auto-escaped by Jinja2 (OWASP XSS prevention) -->
+        <td>{{ log.user_email or '—' }}</td>
+        <td>{{ log.actor_email or '—' }}</td>
+        <td class="mono">{{ log.ip_address or '—' }}</td>
+        <td class="details-col">{{ log.details or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>User Management</h1>
+    <p class="page-subtitle">{{ users | length }} registered users</p>
+  </div>
+</div>
+
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Failed Attempts</th>
+        <th>Joined</th>
+        <th>Change Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td class="mono">{{ u.id }}</td>
+        <!-- OWASP XSS: auto-escaped — never rendered as HTML -->
+        <td>{{ u.email }}</td>
+        <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
+        <td>
+          {% if u.is_locked %}
+            <span class="tag tag-red">Locked until {{ u.locked_until or 'manual unlock' }}</span>
+          {% else %}
+            <span class="tag tag-green">Active</span>
+          {% endif %}
+        </td>
+        <td class="mono">{{ u.failed_attempts }}</td>
+        <td>{{ u.created_at }}</td>
+        <td>
+          <!--
+            OWASP A01 + CSRF:
+            Role change is a POST-only form with a CSRF token.
+            The server validates the CSRF token AND checks the actor's role
+            (via @admin_required + @csrf_protect) before applying any change.
+            new_role is validated against an explicit allowlist server-side.
+          -->
+          <form method="POST"
+                action="{{ url_for('admin.change_role', target_id=u.id) }}"
+                class="inline-form">
+            <input type="hidden" name="_csrf_token" value="{{ current_user.csrf_token }}">
+            <select name="role" class="role-select">
+              <option value="user"  {% if u.role == 'user'  %}selected{% endif %}>user</option>
+              <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-xs">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

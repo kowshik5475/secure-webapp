@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Welcome back</h1>
+    <!--
+      OWASP XSS: current_user.email is auto-escaped by Jinja2.
+      Even if the email contained <script> tags, they would be rendered
+      as text: &lt;script&gt;, not as executable HTML.
+    -->
+    <p class="page-subtitle">{{ current_user.email }}</p>
+  </div>
+  <span class="badge badge-{{ current_user.role }} badge-lg">{{ current_user.role }}</span>
+</div>
+
+<div class="dashboard-grid">
+
+  <div class="info-card">
+    <h2>Session Information</h2>
+    <table class="info-table">
+      <tr>
+        <td>Authentication</td>
+        <td><span class="tag tag-green">JWT in httpOnly Cookie</span></td>
+      </tr>
+      <tr>
+        <td>Role</td>
+        <td><span class="tag tag-blue">{{ current_user.role }}</span></td>
+      </tr>
+      <tr>
+        <td>Token expires</td>
+        <td>1 hour from login</td>
+      </tr>
+      <tr>
+        <td>CSRF protection</td>
+        <td><span class="tag tag-green">Synchronizer Token Active</span></td>
+      </tr>
+      <tr>
+        <td>Cookie flags</td>
+        <td><code>httpOnly; Secure; SameSite=Strict</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="info-card">
+    <h2>Account Details</h2>
+    <table class="info-table">
+      <tr>
+        <td>Email</td>
+        <!-- Auto-escaped — safe even if email contained HTML characters -->
+        <td>{{ db_user.email }}</td>
+      </tr>
+      <tr>
+        <td>Role</td>
+        <td>{{ db_user.role }}</td>
+      </tr>
+      <tr>
+        <td>Account status</td>
+        <td>
+          {% if db_user.is_locked %}
+            <span class="tag tag-red">Locked</span>
+          {% else %}
+            <span class="tag tag-green">Active</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>Failed login attempts</td>
+        <td>{{ db_user.failed_attempts }}</td>
+      </tr>
+      <tr>
+        <td>Member since</td>
+        <td>{{ db_user.created_at }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="info-card info-card-wide">
+    <div class="card-header-row">
+      <h2>Your Uploaded Files</h2>
+      <a href="{{ url_for('uploads.upload') }}" class="btn btn-primary btn-sm">Upload File</a>
+    </div>
+    {% if files %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Original Name</th>
+            <th>Type</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+          <tr>
+            <!-- OWASP XSS: original_name is auto-escaped — not rendered as HTML -->
+            <td>{{ f.original_name }}</td>
+            <td><span class="tag tag-blue">{{ f.mime_type }}</span></td>
+            <td>{{ (f.size_bytes / 1024) | round(1) }} KB</td>
+            <td>{{ f.uploaded_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No files uploaded yet. <a href="{{ url_for('uploads.upload') }}">Upload one</a>.</p>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'admin' %}
+  <div class="info-card info-card-wide">
+    <h2>Admin Quick Links</h2>
+    <div class="quick-links">
+      <a href="{{ url_for('admin.dashboard') }}" class="quick-link">
+        <span class="ql-icon">🏠</span>
+        <span>Admin Dashboard</span>
+      </a>
+      <a href="{{ url_for('admin.users') }}" class="quick-link">
+        <span class="ql-icon">👥</span>
+        <span>Manage Users</span>
+      </a>
+      <a href="{{ url_for('admin.audit_log') }}" class="quick-link">
+        <span class="ql-icon">📋</span>
+        <span>Audit Log</span>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
